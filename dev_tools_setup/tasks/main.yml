@@ -1,0 +1,104 @@
+---
+# tasks file for dev_tools_setup
+      - name: Setup Snapd for RedHat Distros
+        block:
+          - name: Enable EPEL Repo
+            package: 
+              name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+              state: present
+
+          - name: Install Snapd
+            package:
+              name: snapd
+              state: present
+          
+          - name: Systemd Setup
+            systemd:
+              name: snapd.socket
+              state: started
+              enabled: yes
+          
+          - name: Enable Classic Snap Support
+            shell: ln -s /var/lib/snapd/snap /snap
+        
+        become: yes
+        when: ansible_facts['os_family'] == "RedHat"
+    
+      - name: Install Snaps
+        block: 
+        - name: Install Snaps (Classic Confinement)
+          snap: 
+            name: "{{ item }}"
+            classic: yes
+            with_items:  
+              - gitkraken
+              - vscode
+              - go
+
+        - name: Install Snaps (Classic Confinement)
+          snap: 
+            name: "{{ item }}"
+            with_items:
+              - discord
+              - spotify
+        become: yes
+
+
+      - name: Install Tweaks for RHEL/CentOS
+        package:
+          name: gnome-tweaks
+          state: present
+        when: 
+          - ansible_facts['distribution'] == "RedHat" or
+          - ansible_facts['distribution'] == "CentOS"
+        become: yes
+
+      
+      - name: Install Anaconda (RedHat)
+        block:
+        - name: Install Dependencies
+          dnf:
+            name:
+              - libXcomposite 
+              - libXcursor 
+              - libXi 
+              - libXtst 
+              - libXrandr 
+              - alsa-lib 
+              - mesa-libEGL 
+              - libXdamage 
+              - mesa-libGL 
+              - libXScrnSaver
+            state: present
+            become: yes
+        
+        - name: Download Anaconda
+          get-url:
+            url: https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
+            dest: /home/sstephens/Downloads
+
+
+        when: ansible_facts['os_family'] == "RedHat"
+
+      - name: Install Anaconda (Ubuntu)
+        dnf:
+          name:
+            - libXcomposite 
+            - libXcursor 
+            - libXi 
+            - libXtst 
+            - libXrandr 
+            - alsa-lib 
+            - mesa-libEGL 
+            - libXdamage 
+            - mesa-libGL 
+            - libXScrnSaver
+          state: present
+
+      - name: Download Anaconda
+        get-url:
+          url: https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
+          dest: /home/sstephens/Downloads
+    
+
+    
